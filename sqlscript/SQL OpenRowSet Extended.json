@@ -1,0 +1,17 @@
+{
+	"name": "SQL OpenRowSet Extended",
+	"properties": {
+		"content": {
+			"query": "\n-- Openrowset Extended\n\nSELECT COUNTRY, ROUND(SUM(REVENUE_USD), 2) AS TOTAL_REVENUE\nFROM OPENROWSET (\n    BULK 'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'CSV',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) \n    AS [RESULT]\nGROUP BY COUNTRY\nORDER BY COUNTRY ASC;\n\nCREATE VIEW APPLE_REVENUE AS\nSELECT COUNTRY, ROUND(SUM(REVENUE_USD), 2) AS TOTAL_REVENUE\nFROM OPENROWSET (\n    BULK 'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'CSV',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) \n    AS [RESULT]\nGROUP BY COUNTRY;\n\nSELECT * FROM APPLE_REVENUE;\n\nCREATE VIEW APPLE_REVENUE_TOP_10 AS\nWITH TOP_RANKED AS (\nSELECT \nCOUNTRY, \nROUND(SUM(REVENUE_USD), 2) AS TOTAL_REVENUE,\nROW_NUMBER() OVER (ORDER BY SUM(REVENUE_USD) DESC) AS RN\nFROM OPENROWSET (\n    BULK 'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'CSV',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) \n    AS [RESULT]\nGROUP BY COUNTRY\n)\nSELECT\nCOUNTRY,\nTOTAL_REVENUE\nFROM TOP_RANKED\nWHERE RN < 11;\n\nSELECT * FROM APPLE_REVENUE_TOP_10;\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "vin_db",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
