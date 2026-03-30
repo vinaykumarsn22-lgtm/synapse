@@ -1,0 +1,17 @@
+{
+	"name": "SQL OpenRowSet",
+	"properties": {
+		"content": {
+			"query": "-- OPENROWSET\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS [RESULT];\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

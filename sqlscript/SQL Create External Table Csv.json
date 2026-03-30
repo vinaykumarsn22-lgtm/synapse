@@ -1,0 +1,17 @@
+{
+	"name": "SQL Create External Table Csv",
+	"properties": {
+		"content": {
+			"query": "IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] \n\tWITH ( FORMAT_TYPE = DELIMITEDTEXT ,\n\t       FORMAT_OPTIONS (\n\t\t\t FIELD_TERMINATOR = ',',\n\t\t\t FIRST_ROW = 11,\n\t\t\t USE_TYPE_DEFAULT = FALSE\n\t\t\t))\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'synapsecontainer_bigstore456_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [synapsecontainer_bigstore456_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://synapsecontainer@bigstore456.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE dbo.baT1 (\n\t[Match_Id] bigint,\n\t[Innings_Id] bigint,\n\t[Over_Id] bigint,\n\t[Ball_Id] bigint,\n\t[Team_Batting_Id] bigint,\n\t[Team_Bowling_Id] bigint,\n\t[Striker_Id] bigint,\n\t[Striker_Batting_Position] bigint,\n\t[Non_Striker_Id] bigint,\n\t[Bowler_Id] bigint,\n\t[Batsman_Scored] nvarchar(4000),\n\t[Extra_Type] nvarchar(4000),\n\t[Extra_Runs] bigint,\n\t[Player_dissimal_Id] bigint,\n\t[Dissimal_Type] nvarchar(4000),\n\t[Fielder_Id] bigint\n\t)\n\tWITH (\n\tLOCATION = 'Ball_by_Ball.csv',\n\tDATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDelimitedTextFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.baT1\nGO\n\nDROP EXTERNAL TABLE dbo.baT;\nDROP EXTERNAL TABLE dbo.BALL;\nDROP EXTERNAL TABLE dbo.ABC;\nDROP EXTERNAL TABLE dbo.vin;\nDROP EXTERNAL TABLE dbo.BallByBall;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "vin_db",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}

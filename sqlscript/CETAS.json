@@ -1,0 +1,17 @@
+{
+	"name": "CETAS",
+	"properties": {
+		"content": {
+			"query": "-- CETAS (CREATE EXTERNAL TABLE AS SELECT)\n\nCREATE EXTERNAL TABLE dbo.baT1_BallId\nWITH (\n    LOCATION = 'Processed/Ball_ID/',\n    DATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n    FILE_FORMAT = SynapseDelimitedTextFormat\n)\nAS\nSELECT * FROM dbo.baT1 WHERE BALL_ID = '2';\n\nSELECT * FROM dbo.baT1_BallId;\n\n\nCREATE EXTERNAL TABLE dbo.baT1_BallId_Parquet\nWITH (\n    LOCATION = 'Processed/Ball_ID_Parquet/',\n    DATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n    FILE_FORMAT = SynapseParquetFormat\n)\nAS\nSELECT * FROM dbo.baT1 WHERE BALL_ID = '2';\n\nSELECT * FROM dbo.baT1_BallId_Parquet;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "vin_db",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
