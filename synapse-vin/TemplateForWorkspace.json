@@ -1,0 +1,197 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "synapse-vin"
+		},
+		"synapse-vin-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'synapse-vin-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synapse-vin.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"synapse-vin-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://bigstore456.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/synapse-vin-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('synapse-vin-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/synapse-vin-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('synapse-vin-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ReadCsvFile')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS [RESULT];\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/part-00000-d59fed56-862c-4598-87db-1acc61b1c21b-c000.snappy.parquet',\n    FORMAT = 'parquet'\n) AS [APPLE];\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS apple_sales\nwhere quarter = 'Q1';\n\nCREATE DATABASE vin_db;\n\nCREATE EXTERNAL DATA SOURCE MyExternalSource\nWITH(\n    LOCATION = 'https://bigstore456.dfs.core.windows.net/synapsecontainer'\n);\n\nCREATE EXTERNAL FILE FORMAT CsvFileFormat\nWITH(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR = ',',\n        STRING_DELIMITER = '\"',\n        FIRST_ROW = 2\n    )\n);\n\n\n-- create or register your external file as a table\nCREATE EXTERNAL TABLE dbo.SalesData\n(\n    OrderID VARCHAR(20),\n    OrderDate DATE,\n    Year INT,\n    Quarter VARCHAR(5),\n    Month VARCHAR(15),\n    Country VARCHAR(50),\n    Continent VARCHAR(50),\n    City VARCHAR(50),\n    ProductName VARCHAR(100),\n    ProductCategory VARCHAR(50),\n    SubCategory VARCHAR(50),\n    Color VARCHAR(30),\n    UnitPrice DECIMAL(10,2),\n    Quantity INT,\n    Discount INT,\n    DiscountedPrice DECIMAL(10,2),\n    FinalPrice DECIMAL(10,2),\n    Currency VARCHAR(10),\n    ExchangeRate INT,\n    Revenue DECIMAL(18,2),\n    SalesChannel VARCHAR(50),\n    PaymentMethod VARCHAR(50),\n    CustomerType VARCHAR(50),\n    AgeGroup VARCHAR(20),\n    ReturnReason VARCHAR(100),\n    Rating DECIMAL(2,1),\n    OrderStatus VARCHAR(20)\n)\nWITH (\n    LOCATION = 'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    DATA_SOURCE = MyExternalSource,\n    FILE_FORMAT = CsvFileFormat\n);\n\nSELECT * FROM dbo.SalesData;\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "vin_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL Create External Table Parquet')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseParquetFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseParquetFormat] \n\tWITH ( FORMAT_TYPE = PARQUET)\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'synapsecontainer_bigstore456_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [synapsecontainer_bigstore456_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://synapsecontainer@bigstore456.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE dbo.iris (\n\t[sale_id] nvarchar(4000),\n\t[sale_date] date,\n\t[year] int,\n\t[quarter] nvarchar(4000),\n\t[month] nvarchar(4000),\n\t[country] nvarchar(4000),\n\t[region] nvarchar(4000),\n\t[city] nvarchar(4000),\n\t[product_name] nvarchar(4000),\n\t[category] nvarchar(4000),\n\t[storage] nvarchar(4000),\n\t[color] nvarchar(4000),\n\t[unit_price_usd] float,\n\t[discount_pct] int,\n\t[units_sold] int,\n\t[discounted_price_usd] float,\n\t[revenue_usd] float,\n\t[currency] nvarchar(4000),\n\t[fx_rate_to_usd] float,\n\t[revenue_local_currency] float,\n\t[sales_channel] nvarchar(4000),\n\t[payment_method] nvarchar(4000),\n\t[customer_segment] nvarchar(4000),\n\t[customer_age_group] nvarchar(4000),\n\t[previous_device_os] nvarchar(4000),\n\t[customer_rating] float,\n\t[return_status] nvarchar(4000),\n\t[dummy] nvarchar(4000)\n\t)\n\tWITH (\n\tLOCATION = 'part-00000-d59fed56-862c-4598-87db-1acc61b1c21b-c000.snappy.parquet',\n\tDATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseParquetFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.iris\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "vin_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL OpenRowSet')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- OPENROWSET\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS [RESULT];\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CETAS')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- CETAS (CREATE EXTERNAL TABLE AS SELECT)\n\nCREATE EXTERNAL TABLE dbo.baT1_BallId\nWITH (\n    LOCATION = 'Processed/Ball_ID/',\n    DATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n    FILE_FORMAT = SynapseDelimitedTextFormat\n)\nAS\nSELECT * FROM dbo.baT1 WHERE BALL_ID = '2';\n\nSELECT * FROM dbo.baT1_BallId;\n\n\nCREATE EXTERNAL TABLE dbo.baT1_BallId_Parquet\nWITH (\n    LOCATION = 'Processed/Ball_ID_Parquet/',\n    DATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n    FILE_FORMAT = SynapseParquetFormat\n)\nAS\nSELECT * FROM dbo.baT1 WHERE BALL_ID = '2';\n\nSELECT * FROM dbo.baT1_BallId_Parquet;\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "vin_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL Create External Table Csv')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') \n\tCREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] \n\tWITH ( FORMAT_TYPE = DELIMITEDTEXT ,\n\t       FORMAT_OPTIONS (\n\t\t\t FIELD_TERMINATOR = ',',\n\t\t\t FIRST_ROW = 11,\n\t\t\t USE_TYPE_DEFAULT = FALSE\n\t\t\t))\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'synapsecontainer_bigstore456_dfs_core_windows_net') \n\tCREATE EXTERNAL DATA SOURCE [synapsecontainer_bigstore456_dfs_core_windows_net] \n\tWITH (\n\t\tLOCATION = 'abfss://synapsecontainer@bigstore456.dfs.core.windows.net' \n\t)\nGO\n\nCREATE EXTERNAL TABLE dbo.baT1 (\n\t[Match_Id] bigint,\n\t[Innings_Id] bigint,\n\t[Over_Id] bigint,\n\t[Ball_Id] bigint,\n\t[Team_Batting_Id] bigint,\n\t[Team_Bowling_Id] bigint,\n\t[Striker_Id] bigint,\n\t[Striker_Batting_Position] bigint,\n\t[Non_Striker_Id] bigint,\n\t[Bowler_Id] bigint,\n\t[Batsman_Scored] nvarchar(4000),\n\t[Extra_Type] nvarchar(4000),\n\t[Extra_Runs] bigint,\n\t[Player_dissimal_Id] bigint,\n\t[Dissimal_Type] nvarchar(4000),\n\t[Fielder_Id] bigint\n\t)\n\tWITH (\n\tLOCATION = 'Ball_by_Ball.csv',\n\tDATA_SOURCE = [synapsecontainer_bigstore456_dfs_core_windows_net],\n\tFILE_FORMAT = [SynapseDelimitedTextFormat]\n\t)\nGO\n\n\nSELECT TOP 100 * FROM dbo.baT1\nGO\n\nDROP EXTERNAL TABLE dbo.baT;\nDROP EXTERNAL TABLE dbo.BALL;\nDROP EXTERNAL TABLE dbo.ABC;\nDROP EXTERNAL TABLE dbo.vin;\nDROP EXTERNAL TABLE dbo.BallByBall;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "vin_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		}
+	]
+}
