@@ -1,0 +1,17 @@
+{
+	"name": "ReadCsvFile",
+	"properties": {
+		"content": {
+			"query": "SELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS [RESULT];\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/part-00000-d59fed56-862c-4598-87db-1acc61b1c21b-c000.snappy.parquet',\n    FORMAT = 'parquet'\n) AS [APPLE];\n\nSELECT \n* \nFROM  OPENROWSET(\n    BULK'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    FORMAT = 'csv',\n    HEADER_ROW = TRUE,\n    PARSER_VERSION = '2.0'\n) AS apple_sales\nwhere quarter = 'Q1';\n\nCREATE DATABASE vin_db;\n\nCREATE EXTERNAL DATA SOURCE MyExternalSource\nWITH(\n    LOCATION = 'https://bigstore456.dfs.core.windows.net/synapsecontainer'\n);\n\nCREATE EXTERNAL FILE FORMAT CsvFileFormat\nWITH(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR = ',',\n        STRING_DELIMITER = '\"',\n        FIRST_ROW = 2\n    )\n);\n\n\n-- create or register your external file as a table\nCREATE EXTERNAL TABLE dbo.SalesData\n(\n    OrderID VARCHAR(20),\n    OrderDate DATE,\n    Year INT,\n    Quarter VARCHAR(5),\n    Month VARCHAR(15),\n    Country VARCHAR(50),\n    Continent VARCHAR(50),\n    City VARCHAR(50),\n    ProductName VARCHAR(100),\n    ProductCategory VARCHAR(50),\n    SubCategory VARCHAR(50),\n    Color VARCHAR(30),\n    UnitPrice DECIMAL(10,2),\n    Quantity INT,\n    Discount INT,\n    DiscountedPrice DECIMAL(10,2),\n    FinalPrice DECIMAL(10,2),\n    Currency VARCHAR(10),\n    ExchangeRate INT,\n    Revenue DECIMAL(18,2),\n    SalesChannel VARCHAR(50),\n    PaymentMethod VARCHAR(50),\n    CustomerType VARCHAR(50),\n    AgeGroup VARCHAR(20),\n    ReturnReason VARCHAR(100),\n    Rating DECIMAL(2,1),\n    OrderStatus VARCHAR(20)\n)\nWITH (\n    LOCATION = 'https://bigstore456.dfs.core.windows.net/synapsecontainer/apple_global_sales_dataset (1).csv',\n    DATA_SOURCE = MyExternalSource,\n    FILE_FORMAT = CsvFileFormat\n);\n\nSELECT * FROM dbo.SalesData;\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "vin_db",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
