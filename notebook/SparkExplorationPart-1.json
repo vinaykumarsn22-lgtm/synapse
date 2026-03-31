@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "ad644792-70e6-49d7-9d30-d1f7701f2e96"
+				"spark.autotune.trackingId": "b88cde41-01c2-41da-aa82-1a1ade87e6e5"
 			}
 		},
 		"metadata": {
@@ -53,7 +53,7 @@
 				"source": [
 					"print('Hello Synapse!')"
 				],
-				"execution_count": 8
+				"execution_count": 23
 			},
 			{
 				"cell_type": "code",
@@ -72,7 +72,25 @@
 					"\n",
 					"display(sales_df)"
 				],
-				"execution_count": 9
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from pyspark.sql import functions as F"
+				],
+				"execution_count": 25
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"collapsed": false
+				},
+				"source": [
+					"sales_q4 = sales_df.filter(F.col('quarter')=='Q4')\n",
+					"display(sales_q4)"
+				],
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -86,6 +104,13 @@
 				"source": [
 					""
 				]
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"sales_q4.write.format('parquet').save('/notebook/sales_q4')"
+				],
+				"execution_count": 29
 			}
 		]
 	}
