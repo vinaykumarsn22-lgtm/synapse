@@ -1,0 +1,92 @@
+{
+	"name": "SparkExplorationPart-1",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "VinComputer",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "ad644792-70e6-49d7-9d30-d1f7701f2e96"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/981fe528-8a22-409f-9691-ce100f2314b7/resourceGroups/rg_vin/providers/Microsoft.Synapse/workspaces/synapse-vin/bigDataPools/VinComputer",
+				"name": "VinComputer",
+				"type": "Spark",
+				"endpoint": "https://synapse-vin.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/VinComputer",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.5",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"print('Hello Synapse!')"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"collapsed": false
+				},
+				"source": [
+					"adls_path = 'abfss://synapsecontainer@bigstore456.dfs.core.windows.net/apple_global_sales_dataset (1).csv'\n",
+					"\n",
+					"sales_df = (\n",
+					"    spark.read.format('csv')\n",
+					"    .option('header', True)\n",
+					"    .option('inferSchema', True)\n",
+					"    .load(adls_path)\n",
+					")\n",
+					"\n",
+					"display(sales_df)"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				]
+			}
+		]
+	}
+}
